@@ -300,7 +300,15 @@ input:focus, textarea:focus {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  flex: 1;
+}
+
+.output-section {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 100px;
 }
 
 .output-header {
