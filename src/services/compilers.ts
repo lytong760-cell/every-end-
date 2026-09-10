@@ -5,6 +5,7 @@ export type CompileResult = {
   html?: string;
   error?: string;
   warnings?: string[];
+  framework?: string;
 };
 
 const UNSUPPORTED_LANGUAGES = new Set([
