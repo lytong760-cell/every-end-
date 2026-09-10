@@ -1,8 +1,3 @@
-import * as Babel from '@babel/standalone';
-import * as Vue from 'vue';
-import * as VueCompilerSFC from '@vue/compiler-sfc';
-import * as SvelteCompiler from 'svelte/compiler';
-
 export type CompileResult = {
   success: boolean;
   js?: string;
@@ -11,123 +6,6 @@ export type CompileResult = {
   error?: string;
   warnings?: string[];
 };
-
-const LANGUAGE_COMPILERS: Record<string, (code: string) => CompileResult> = {};
-
-function registerCompiler(language: string, compiler: (code: string) => CompileResult) {
-  LANGUAGE_COMPILERS[language] = compiler;
-}
-
-registerCompiler('javascript', (code) => {
-  try {
-    const result = Babel.transform(code, {
-      presets: [],
-      filename: 'input.js',
-    });
-    return { success: true, js: result.code };
-  } catch (e: any) {
-    return { success: false, error: e.message };
-  }
-});
-
-registerCompiler('typescript', (code) => {
-  try {
-    const result = Babel.transform(code, {
-      presets: ['@babel/preset-typescript'],
-      filename: 'input.ts',
-    });
-    return { success: true, js: result.code };
-  } catch (e: any) {
-    return { success: false, error: e.message };
-  }
-});
-
-registerCompiler('jsx', (code) => {
-  try {
-    const result = Babel.transform(code, {
-      presets: ['@babel/preset-react'],
-      filename: 'input.jsx',
-    });
-    return { success: true, js: result.code };
-  } catch (e: any) {
-    return { success: false, error: e.message };
-  }
-});
-
-registerCompiler('tsx', (code) => {
-  try {
-    const result = Babel.transform(code, {
-      presets: ['@babel/preset-typescript', '@babel/preset-react'],
-      filename: 'input.tsx',
-    });
-    return { success: true, js: result.code };
-  } catch (e: any) {
-    return { success: false, error: e.message };
-  }
-});
-
-registerCompiler('vue', (code) => {
-  try {
-    const { descriptor, errors } = VueCompilerSFC.parse(code);
-    if (errors.length > 0) {
-      return { success: false, error: errors.join('\n') };
-    }
-
-    let jsCode = '';
-    let cssCode = '';
-
-    if (descriptor.template) {
-      const compiled = VueCompilerSFC.compileTemplate({
-        source: descriptor.template.content,
-        filename: 'Component.vue',
-        id: 'xxx',
-        compilerOptions: {
-          mode: 'function',
-        },
-      });
-      jsCode += compiled.code + '\n';
-    }
-
-    if (descriptor.script) {
-      const script = descriptor.script!.content;
-      const scriptResult = Babel.transform(script, {
-        presets: ['@babel/preset-typescript'],
-        filename: 'Component.vue',
-      });
-      jsCode += scriptResult.code + '\n';
-    }
-
-    if (descriptor.styles.length > 0) {
-      cssCode = descriptor.styles.map(s => s.content).join('\n');
-    }
-
-    return { success: true, js: jsCode, css: cssCode, framework: 'vue' };
-  } catch (e: any) {
-    return { success: false, error: e.message };
-  }
-});
-
-registerCompiler('svelte', (code) => {
-  try {
-    const result = SvelteCompiler.compile(code, { generate: 'dom', dev: false });
-    if (result.js && Array.isArray(result.js) && result.js.length > 0) {
-      const jsCode = typeof result.js[0].code === 'string' ? result.js[0].code : '';
-      const cssCode = result.css?.code || '';
-      return { success: true, js: jsCode, css: cssCode, framework: 'svelte' };
-    }
-    return { success: false, error: 'Failed to compile Svelte component' };
-  } catch (e: any) {
-    return { success: false, error: e.message };
-  }
-});
-
-registerCompiler('css', (code) => {
-  return { success: true, css: code };
-});
-
-registerCompiler('html', (code) => {
-  return { success: true, html: code };
-});
 
 const UNSUPPORTED_LANGUAGES = new Set([
   'python', 'java', 'c', 'cpp', 'csharp', 'go', 'rust',
@@ -141,7 +19,7 @@ function getUnsupportedMessage(language: string): string {
   return `Language "${language}" is not supported for in-browser compilation yet.\n\nSupported languages: JavaScript, TypeScript, JSX, TSX, Vue, Svelte, CSS, HTML.\n\nFor other languages, consider using a backend compilation service.`;
 }
 
-export function compile(code: string, language: string, filename: string): CompileResult {
+export async function compile(code: string, language: string, filename: string): Promise<CompileResult> {
   if (!code.trim()) {
     return { success: false, error: 'Cannot compile empty code.' };
   }
@@ -150,14 +28,107 @@ export function compile(code: string, language: string, filename: string): Compi
     return { success: false, error: getUnsupportedMessage(language) };
   }
 
-  const compiler = LANGUAGE_COMPILERS[language] || LANGUAGE_COMPILERS['javascript'];
-  return compiler(code);
+  try {
+    switch (language) {
+      case 'javascript':
+      case 'jsx':
+      case 'typescript':
+      case 'tsx':
+        return await compileWithBabel(code, language, filename);
+      case 'vue':
+        return await compileVue(code, filename);
+      case 'svelte':
+        return await compileSvelte(code, filename);
+      case 'css':
+        return { success: true, css: code };
+      case 'html':
+        return { success: true, html: code };
+      default:
+        return await compileWithBabel(code, 'javascript', filename);
+    }
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+async function compileWithBabel(code: string, language: string, filename: string): Promise<CompileResult> {
+  const Babel = await import('@babel/standalone');
+  const presets: string[] = [];
+
+  if (language === 'typescript' || language === 'tsx') {
+    presets.push('@babel/preset-typescript');
+  }
+  if (language === 'jsx' || language === 'tsx') {
+    presets.push('@babel/preset-react');
+  }
+
+  try {
+    const result = Babel.transform(code, {
+      presets,
+      filename,
+    });
+    return { success: true, js: result.code };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+async function compileVue(code: string, filename: string): Promise<CompileResult> {
+  const [VueCompilerSFC, Babel] = await Promise.all([
+    import('@vue/compiler-sfc'),
+    import('@babel/standalone'),
+  ]);
+
+  const { descriptor, errors } = VueCompilerSFC.parse(code);
+  if (errors.length > 0) {
+    return { success: false, error: errors.join('\n') };
+  }
+
+  let jsCode = '';
+  let cssCode = '';
+
+  if (descriptor.template) {
+    const compiled = VueCompilerSFC.compileTemplate({
+      source: descriptor.template.content,
+      filename,
+      id: 'xxx',
+      compilerOptions: { mode: 'function' },
+    });
+    jsCode += compiled.code + '\n';
+  }
+
+  if (descriptor.script) {
+    const scriptResult = Babel.transform(descriptor.script!.content, {
+      presets: ['@babel/preset-typescript'],
+      filename,
+    });
+    jsCode += scriptResult.code + '\n';
+  }
+
+  if (descriptor.styles.length > 0) {
+    cssCode = descriptor.styles.map(s => s.content).join('\n');
+  }
+
+  return { success: true, js: jsCode, css: cssCode, framework: 'vue' };
+}
+
+async function compileSvelte(code: string, filename: string): Promise<CompileResult> {
+  const { compile } = await import('svelte/compiler');
+  const result = compile(code, { generate: 'dom', dev: false });
+
+  if (result.js && Array.isArray(result.js) && result.js.length > 0) {
+    const jsCode = typeof result.js[0].code === 'string' ? result.js[0].code : '';
+    const cssCode = result.css?.code || '';
+    return { success: true, js: jsCode, css: cssCode, framework: 'svelte' };
+  }
+
+  return { success: false, error: 'Failed to compile Svelte component' };
 }
 
 export function getSupportedLanguages(): string[] {
-  return Object.keys(LANGUAGE_COMPILERS);
+  return ['javascript', 'typescript', 'jsx', 'tsx', 'vue', 'svelte', 'css', 'html'];
 }
 
 export function isLanguageSupported(language: string): boolean {
-  return language in LANGUAGE_COMPILERS || !UNSUPPORTED_LANGUAGES.has(language);
+  return !UNSUPPORTED_LANGUAGES.has(language);
 }
