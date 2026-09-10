@@ -24,7 +24,6 @@ export function IDE() {
   const [openTabs, setOpenTabs] = useState<string[]>([]);
   const [explorerWidth, setExplorerWidth] = useState(240);
   const [outputHeight, setOutputHeight] = useState(200);
-  const [isCompiling, setIsCompiling] = useState(false);
 
   const { status, output, previewRef, run, clearOutput } = useCompiler();
 
@@ -63,11 +62,9 @@ export function IDE() {
     }
   }, [activePath, updateFile]);
 
-  const handleRun = useCallback(() => {
+  const handleRun = useCallback(async () => {
     if (!activeFile) return;
-    setIsCompiling(true);
-    run(activeFile.content, activeFile.language, activeFile.path);
-    setTimeout(() => setIsCompiling(false), 100);
+    await run(activeFile.content, activeFile.language, activeFile.path);
   }, [activeFile, run]);
 
   const handleCreateFile = useCallback((path: string) => {
