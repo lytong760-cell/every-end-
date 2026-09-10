@@ -1,9 +1,10 @@
 import React, { Suspense, lazy, useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Sphere, TorusKnot, Box } from '@react-three/drei';
+import { Group } from 'three';
 
 function Scene({ target }: { target: { x: number; y: number } }) {
-  const groupRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<Group>(null);
 
   useFrame(() => {
     if (groupRef.current) {
