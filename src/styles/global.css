@@ -146,12 +146,22 @@ input:focus, textarea:focus {
   height: 100vh;
   width: 100%;
   background: var(--bg-primary);
+  min-height: 0;
+}
+
+.ide-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .ide-main {
-  display: flex;
   flex: 1;
+  display: flex;
   overflow: hidden;
+  min-height: 0;
 }
 
 .file-explorer {
