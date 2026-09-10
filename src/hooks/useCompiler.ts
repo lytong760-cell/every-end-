@@ -10,12 +10,12 @@ export function useCompiler() {
   const [lastResult, setLastResult] = useState<CompileResult | null>(null);
   const previewRef = useRef<HTMLIFrameElement | null>(null);
 
-  const run = useCallback((code: string, language: string, filename: string) => {
+  const run = useCallback(async (code: string, language: string, filename: string) => {
     setStatus('compiling');
     setOutput(prev => [...prev, `[${new Date().toLocaleTimeString()}] Compiling ${filename}...`]);
 
     try {
-      const result = compile(code, language, filename);
+      const result = await compile(code, language, filename);
       setLastResult(result);
 
       if (result.success) {
@@ -28,14 +28,12 @@ export function useCompiler() {
           });
         }
 
-        const html = result.error
-          ? generateErrorHtml(result.error)
-          : generatePreviewHtml({
-              js: result.js,
-              css: result.css,
-              html: result.html,
-              framework: result.framework,
-            });
+        const html = generatePreviewHtml({
+          js: result.js,
+          css: result.css,
+          html: result.html,
+          framework: result.framework,
+        });
 
         if (previewRef.current) {
           previewRef.current.srcdoc = html;
