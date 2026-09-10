@@ -11,6 +11,12 @@ export default defineConfig({
     target: 'esnext',
   },
   optimizeDeps: {
-    exclude: ['@babel/standalone', 'esbuild-wasm', 'pyodide'],
+    exclude: [
+      '@babel/standalone',
+      '@vue/compiler-sfc',
+      'svelte/compiler',
+      'esbuild-wasm',
+      'pyodide',
+    ],
   },
 });
