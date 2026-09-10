@@ -46,7 +46,7 @@ export function OutputPanel({ output, status, onClear, previewRef }: OutputPanel
         </div>
       </div>
       <iframe
-        ref={previewRef}
+        ref={previewRef as React.RefObject<HTMLIFrameElement>}
         title="Preview"
         sandbox="allow-scripts"
         style={{
