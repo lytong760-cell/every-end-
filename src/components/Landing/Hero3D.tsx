@@ -1,15 +1,24 @@
-import React, { Suspense, lazy } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { Suspense, lazy, useRef, useEffect, useState } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Sphere, TorusKnot, Box } from '@react-three/drei';
 
-function Scene({ mouse }: { mouse: { x: number; y: number } }) {
+function Scene({ target }: { target: { x: number; y: number } }) {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(() => {
+    if (groupRef.current) {
+      groupRef.current.position.x += (target.x * 1.5 - groupRef.current.position.x) * 0.05;
+      groupRef.current.position.y += (target.y * 1.5 - groupRef.current.position.y) * 0.05;
+    }
+  });
+
   return (
     <>
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} intensity={1} />
       <pointLight position={[-10, -10, -10]} intensity={0.5} color="#a371f7" />
 
-      <group position={[mouse.x * 2, mouse.y * 2, 0]}>
+      <group ref={groupRef}>
         <Sphere args={[1.5, 32, 32]} position={[-4, 2, -2]}>
           <meshStandardMaterial color="#58a6ff" wireframe transparent opacity={0.3} />
         </Sphere>
@@ -40,14 +49,14 @@ function Scene({ mouse }: { mouse: { x: number; y: number } }) {
 }
 
 export function Hero3D() {
-  const mouse = React.useRef({ x: 0, y: 0 });
+  const [target, setTarget] = useState({ x: 0, y: 0 });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      mouse.current = {
+      setTarget({
         x: (e.clientX / window.innerWidth - 0.5) * 2,
         y: -(e.clientY / window.innerHeight - 0.5) * 2,
-      };
+      });
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
@@ -57,7 +66,7 @@ export function Hero3D() {
     <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
       <Canvas camera={{ position: [0, 0, 8], fov: 60 }}>
         <Suspense fallback={null}>
-          <Scene mouse={mouse.current} />
+          <Scene target={target} />
         </Suspense>
       </Canvas>
     </div>
