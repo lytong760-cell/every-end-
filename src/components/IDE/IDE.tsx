@@ -100,41 +100,45 @@ export function IDE() {
           {status === 'compiling' ? 'Compiling...' : activeFile ? activeFile.path : 'No file open'}
         </span>
       </div>
-      <div className="ide-main">
-        <div style={{ width: explorerWidth, minWidth: 160, maxWidth: 400, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <FileExplorer
-            files={files}
-            activePath={activePath}
-            onSelect={handleSelectFile}
-            onCreate={handleCreateFile}
-            onDelete={deleteFile}
-            onRename={renameFile}
+      <div className="ide-body">
+        <div className="ide-main">
+          <div style={{ width: explorerWidth, minWidth: 160, maxWidth: 400, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <FileExplorer
+              files={files}
+              activePath={activePath}
+              onSelect={handleSelectFile}
+              onCreate={handleCreateFile}
+              onDelete={deleteFile}
+              onRename={renameFile}
+            />
+          </div>
+          <ResizeHandle
+            direction="horizontal"
+            onResize={(delta) => setExplorerWidth(prev => Math.max(160, Math.min(400, prev + delta)))}
           />
+          <div className="editor-area">
+            <TabsBar
+              tabs={tabs}
+              activePath={activePath}
+              onSelect={setActivePath}
+              onClose={handleCloseTab}
+            />
+            <EditorPanel file={activeFile} onChange={handleEditorChange} />
+          </div>
         </div>
         <ResizeHandle
-          direction="horizontal"
-          onResize={(delta) => setExplorerWidth(prev => Math.max(160, Math.min(400, prev + delta)))}
+          direction="vertical"
+          onResize={(delta) => setOutputHeight(prev => Math.max(100, Math.min(500, prev - delta)))}
         />
-        <div className="editor-area">
-          <TabsBar
-            tabs={tabs}
-            activePath={activePath}
-            onSelect={setActivePath}
-            onClose={handleCloseTab}
+        <div className="output-section" style={{ height: outputHeight }}>
+          <OutputPanel
+            output={output}
+            status={status}
+            onClear={clearOutput}
+            previewRef={previewRef}
           />
-          <EditorPanel file={activeFile} onChange={handleEditorChange} />
         </div>
       </div>
-      <ResizeHandle
-        direction="vertical"
-        onResize={(delta) => setOutputHeight(prev => Math.max(100, Math.min(500, prev - delta)))}
-      />
-      <OutputPanel
-        output={output}
-        status={status}
-        onClear={clearOutput}
-        previewRef={previewRef}
-      />
       <StatusBar
         activeFile={activeFile}
         compileStatus={status}
