@@ -5,7 +5,6 @@ interface OutputPanelProps {
   status: 'idle' | 'compiling' | 'success' | 'error';
   onClear: () => void;
   previewRef: React.RefObject<HTMLIFrameElement | null>;
-  onResize?: (delta: number) => void;
 }
 
 export function OutputPanel({ output, status, onClear, previewRef }: OutputPanelProps) {
@@ -26,8 +25,8 @@ export function OutputPanel({ output, status, onClear, previewRef }: OutputPanel
   };
 
   return (
-    <>
-      <div className="output-panel" style={{ height: '200px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <div className="output-panel">
         <div className="output-header">
           <span>Output / Console</span>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -51,12 +50,12 @@ export function OutputPanel({ output, status, onClear, previewRef }: OutputPanel
         sandbox="allow-scripts"
         style={{
           width: '100%',
-          height: '200px',
+          flex: 1,
+          minHeight: 100,
           border: 'none',
           background: '#fff',
-          flexShrink: 0,
         }}
       />
-    </>
+    </div>
   );
 }
