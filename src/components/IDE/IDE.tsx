@@ -79,7 +79,7 @@ export function IDE() {
   return (
     <div className="ide-container">
       <div className="toolbar">
-        <button className="toolbar-button run" onClick={handleRun} disabled={!activeFile || isCompiling}>
+        <button className="toolbar-button run" onClick={handleRun} disabled={!activeFile || status === 'compiling'}>
           ▶ Run
         </button>
         <select
@@ -97,7 +97,7 @@ export function IDE() {
           <option value="svelte">Svelte</option>
         </select>
         <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
-          {isCompiling ? 'Compiling...' : activeFile ? activeFile.path : 'No file open'}
+          {status === 'compiling' ? 'Compiling...' : activeFile ? activeFile.path : 'No file open'}
         </span>
       </div>
       <div className="ide-main">
