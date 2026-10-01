@@ -29,3 +29,19 @@ declare module 'svelte/compiler' {
   }
   export function compile(source: string, options?: any): CompileResult;
 }
+
+declare module 'three' {
+  export const Scene: any;
+  export const PerspectiveCamera: any;
+  export const WebGLRenderer: any;
+  export const AmbientLight: any;
+  export const PointLight: any;
+  export const Group: any;
+  export const SphereGeometry: any;
+  export const MeshStandardMaterial: any;
+  export const Mesh: any;
+  export const TorusKnotGeometry: any;
+  export const BoxGeometry: any;
+  export * as THREE from 'three';
+  export default THREE;
+}

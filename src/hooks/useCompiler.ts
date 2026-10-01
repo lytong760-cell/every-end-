@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { compile, type CompileResult } from '../services/compilers';
 import { generatePreviewHtml, generateErrorHtml } from '../utils/sandbox';
 
@@ -9,6 +9,26 @@ export function useCompiler() {
   const [output, setOutput] = useState<string[]>([]);
   const [lastResult, setLastResult] = useState<CompileResult | null>(null);
   const previewRef = useRef<HTMLIFrameElement | null>(null);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const data = event.data;
+      if (!data || typeof data !== 'object') return;
+
+      if (data.type === 'console') {
+        const method = data.method || 'log';
+        const args = data.args || [];
+        const line = args.map((arg: string) => arg).join(' ');
+        setOutput(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${method.toUpperCase()}: ${line}`]);
+      } else if (data.type === 'error') {
+        const message = data.message || 'Unknown error';
+        setOutput(prev => [...prev, `[${new Date().toLocaleTimeString()}] Error: ${message}`]);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   const run = useCallback(async (code: string, language: string, filename: string) => {
     setStatus('compiling');

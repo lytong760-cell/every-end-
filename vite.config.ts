@@ -16,7 +16,6 @@ export default defineConfig({
       '@vue/compiler-sfc',
       'svelte/compiler',
       'esbuild-wasm',
-      'pyodide',
     ],
   },
 });

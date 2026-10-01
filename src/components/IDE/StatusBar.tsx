@@ -31,7 +31,7 @@ export function StatusBar({ activeFile, compileStatus, errorCount }: StatusBarPr
       </div>
       <div className="status-bar-right">
         {errorCount > 0 && <span style={{ color: 'var(--error)' }}>{errorCount} errors</span>}
-        <span>every-end IDE</span>
+        <span>every IDE</span>
       </div>
     </div>
   );

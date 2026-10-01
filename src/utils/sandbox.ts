@@ -23,6 +23,27 @@ export function generatePreviewHtml(compiledOutput: {
   const cssBlock = css ? `<style>${css}</style>` : '';
   const bodyContent = html || '<div id="app"></div>';
 
+  const consoleCapture = `
+<script>
+(function() {
+  var methods = ['log', 'warn', 'error', 'info', 'debug'];
+  methods.forEach(function(method) {
+    var original = console[method];
+    console[method] = function() {
+      try {
+        parent.postMessage({ type: 'console', method: method, args: Array.prototype.slice.call(arguments).map(function(a) { try { return typeof a === 'object' ? JSON.stringify(a) : String(a); } catch(e) { return String(a); } }) }, '*');
+      } catch(e) {}
+      original.apply(console, arguments);
+    };
+  });
+  window.onerror = function(message, url, line, col, error) {
+    try {
+      parent.postMessage({ type: 'error', message: message, url: url, line: line }, '*');
+    } catch(e) {}
+  };
+})();
+<\/script>`;
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,6 +52,7 @@ export function generatePreviewHtml(compiledOutput: {
   <title>Preview</title>
   ${cssBlock}
   ${runtimeScripts}
+  ${consoleCapture}
   <style>
     body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; }
     #app { padding: 16px; }

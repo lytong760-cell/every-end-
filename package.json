@@ -9,19 +9,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@babel/preset-typescript": "^7.24.0",
+    "@babel/standalone": "^7.25.0",
+    "@monaco-editor/react": "^4.6.0",
+    "@vue/compiler-sfc": "^3.4.0",
+    "esbuild-wasm": "^0.21.0",
+    "framer-motion": "^13.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "@monaco-editor/react": "^4.6.0",
-    "@babel/standalone": "^7.25.0",
-    "@babel/preset-typescript": "^7.24.0",
-    "esbuild-wasm": "^0.21.0",
-    "vue": "^3.4.0",
-    "@vue/compiler-sfc": "^3.4.0",
     "svelte": "^4.2.0",
-    "@react-three/fiber": "^8.17.0",
-    "@react-three/drei": "^9.99.0",
     "three": "^0.169.0",
-    "pyodide": "^0.25.0"
+    "vue": "^3.4.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.0",

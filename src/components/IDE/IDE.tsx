@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { FileExplorer } from './FileExplorer';
 import { TabsBar } from './TabsBar';
 import { EditorPanel } from './EditorPanel';
@@ -8,6 +8,8 @@ import { ResizeHandle } from './ResizeHandle';
 import { useFileSystem } from '../../hooks/useFileSystem';
 import { useCompiler } from '../../hooks/useCompiler';
 import type { FileNode } from '../../services/fileSystem';
+import BorderGlow from '../react-bits/BorderGlow';
+import '../react-bits/BorderGlow.css';
 
 export function IDE() {
   const {
@@ -72,6 +74,26 @@ export function IDE() {
     setOpenTabs(prev => [...prev, path]);
   }, [createFile]);
 
+  const handleLanguageChange = useCallback((language: string) => {
+    if (activePath) {
+      const updated = files.find(f => f.path === activePath);
+      if (updated) {
+        updateFile(activePath, updated.content);
+      }
+    }
+  }, [activePath, files, updateFile]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        handleRun();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleRun]);
+
   const errorCount = useMemo(() => {
     return output.filter(line => line.includes('Error') || line.includes('error')).length;
   }, [output]);
@@ -85,9 +107,7 @@ export function IDE() {
         <select
           className="language-select"
           value={activeFile?.language || 'plaintext'}
-          onChange={(e) => {
-            // Language is auto-detected from file extension
-          }}
+          onChange={(e) => handleLanguageChange(e.target.value)}
         >
           <option value="javascript">JavaScript</option>
           <option value="typescript">TypeScript</option>
@@ -103,14 +123,24 @@ export function IDE() {
       <div className="ide-body">
         <div className="ide-main">
           <div style={{ width: explorerWidth, minWidth: 160, maxWidth: 400, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <FileExplorer
-              files={files}
-              activePath={activePath}
-              onSelect={handleSelectFile}
-              onCreate={handleCreateFile}
-              onDelete={deleteFile}
-              onRename={renameFile}
-            />
+            <BorderGlow
+              backgroundColor="var(--bg-secondary)"
+              glowColor="40 80 80"
+              borderRadius={8}
+              glowIntensity={0.6}
+              edgeSensitivity={25}
+              className="ide-panel"
+              style={{ height: '100%' }}
+            >
+              <FileExplorer
+                files={files}
+                activePath={activePath}
+                onSelect={handleSelectFile}
+                onCreate={handleCreateFile}
+                onDelete={deleteFile}
+                onRename={renameFile}
+              />
+            </BorderGlow>
           </div>
           <ResizeHandle
             direction="horizontal"
@@ -123,7 +153,17 @@ export function IDE() {
               onSelect={setActivePath}
               onClose={handleCloseTab}
             />
-            <EditorPanel file={activeFile} onChange={handleEditorChange} />
+            <BorderGlow
+              backgroundColor="var(--bg-primary)"
+              glowColor="40 80 80"
+              borderRadius={0}
+              glowIntensity={0.4}
+              edgeSensitivity={30}
+              className="ide-panel"
+              style={{ height: '100%' }}
+            >
+              <EditorPanel file={activeFile} onChange={handleEditorChange} />
+            </BorderGlow>
           </div>
         </div>
         <ResizeHandle
@@ -131,12 +171,22 @@ export function IDE() {
           onResize={(delta) => setOutputHeight(prev => Math.max(100, Math.min(500, prev - delta)))}
         />
         <div className="output-section" style={{ height: outputHeight }}>
-          <OutputPanel
-            output={output}
-            status={status}
-            onClear={clearOutput}
-            previewRef={previewRef}
-          />
+          <BorderGlow
+            backgroundColor="var(--bg-secondary)"
+            glowColor="40 80 80"
+            borderRadius={0}
+            glowIntensity={0.4}
+            edgeSensitivity={30}
+            className="ide-panel"
+            style={{ height: '100%' }}
+          >
+            <OutputPanel
+              output={output}
+              status={status}
+              onClear={clearOutput}
+              previewRef={previewRef}
+            />
+          </BorderGlow>
         </div>
       </div>
       <StatusBar

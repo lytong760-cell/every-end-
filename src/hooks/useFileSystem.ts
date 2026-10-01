@@ -1,12 +1,26 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { loadFiles, saveFiles, type FileNode, getLanguageFromPath } from '../services/fileSystem';
 
 export function useFileSystem() {
   const [files, setFiles] = useState<FileNode[]>(() => loadFiles());
   const [activePath, setActivePath] = useState<string | null>(null);
+  const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    saveFiles(files);
+    if (timerRef.current) {
+      window.clearTimeout(timerRef.current);
+    }
+    timerRef.current = window.setTimeout(() => {
+      saveFiles(files);
+      timerRef.current = null;
+    }, 300);
+
+    return () => {
+      if (timerRef.current) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [files]);
 
   useEffect(() => {

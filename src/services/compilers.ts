@@ -87,12 +87,13 @@ async function compileVue(code: string, filename: string): Promise<CompileResult
 
   let jsCode = '';
   let cssCode = '';
+  const componentId = `vue_${Math.random().toString(36).slice(2, 9)}`;
 
   if (descriptor.template) {
     const compiled = VueCompilerSFC.compileTemplate({
       source: descriptor.template.content,
       filename,
-      id: 'xxx',
+      id: componentId,
       compilerOptions: { mode: 'function' },
     });
     jsCode += compiled.code + '\n';
@@ -110,20 +111,32 @@ async function compileVue(code: string, filename: string): Promise<CompileResult
     cssCode = descriptor.styles.map(s => s.content).join('\n');
   }
 
-  return { success: true, js: jsCode, css: cssCode, framework: 'vue' };
+  const mountCode = `
+${jsCode}
+const __vue_app = Vue.createApp({
+  template: '<div id="app"><component :is="__vue_component" /></div>',
+  data() {
+    return { __vue_component: ${componentId.replace(/-/g, '_')} || {} };
+  }
+});
+__vue_app.mount('#app');
+`;
+
+  return { success: true, js: mountCode, css: cssCode, framework: 'vue' };
 }
 
 async function compileSvelte(code: string, filename: string): Promise<CompileResult> {
   const { compile } = await import('svelte/compiler');
   const result = compile(code, { generate: 'dom', dev: false });
 
-  if (result.js && Array.isArray(result.js) && result.js.length > 0) {
-    const jsCode = typeof result.js[0].code === 'string' ? result.js[0].code : '';
-    const cssCode = result.css?.code || '';
-    return { success: true, js: jsCode, css: cssCode, framework: 'svelte' };
+  const jsCode = typeof result.js?.code === 'string' ? result.js.code : '';
+  const cssCode = result.css?.code || '';
+
+  if (!jsCode) {
+    return { success: false, error: 'Failed to compile Svelte component' };
   }
 
-  return { success: false, error: 'Failed to compile Svelte component' };
+  return { success: true, js: jsCode, css: cssCode, framework: 'svelte' };
 }
 
 export function getSupportedLanguages(): string[] {
